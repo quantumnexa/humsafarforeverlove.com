@@ -304,7 +304,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Diverse Reach</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Ashhad Serving clients across Pakistan with a growing international presence for global connections.
+                  Serving clients across Pakistan with a growing international presence for global connections.
                 </p>
               </CardContent>
             </Card>
