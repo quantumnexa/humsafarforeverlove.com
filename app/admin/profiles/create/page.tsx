@@ -131,8 +131,8 @@ interface UploadedImage {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [activeTab, setActiveTab] = useState('photos');
   const [pasteText, setPasteText] = useState<string>("");
-  // Feature flag: show/hide the "Fill Demo Details" button in bottom bar
-  const SHOW_DEMO_BUTTON = false;
+  // Keep demo button clickable but invisible; set to false to show it
+  const DEMO_BUTTON_VISUALLY_HIDDEN = true;
   const tabOrder = ['photos', 'basic', 'religious', 'physical', 'lifestyle', 'education', 'family', 'partner'] as const;
   const goPrev = () => {
     const idx = tabOrder.indexOf(activeTab as typeof tabOrder[number]);
@@ -1608,14 +1608,14 @@ interface UploadedImage {
               {/* Navigation / Submit */}
               <div className="flex justify-between items-center mt-8">
                 <div className="flex gap-4">
-                  {SHOW_DEMO_BUTTON && (
-                    <Button
-                      variant="outline"
-                      onClick={fillDemoDetails}
-                    >
-                      Fill Demo Details
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    onClick={fillDemoDetails}
+                    className={DEMO_BUTTON_VISUALLY_HIDDEN ? 'opacity-0' : ''}
+                    aria-hidden={DEMO_BUTTON_VISUALLY_HIDDEN}
+                  >
+                    Fill Demo Details
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => router.push('/admin/profiles')}
