@@ -77,12 +77,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (max 4MB to match admin UI)
+    const maxSize = 4 * 1024 * 1024; // 4MB
     if (file.size > maxSize) {
       console.log('❌ File too large:', file.size);
       return NextResponse.json(
-        { error: 'File size too large. Maximum 5MB allowed' },
+        { error: 'File size too large. Maximum 4MB allowed' },
         { status: 400 }
       );
     }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Toaster } from '@/components/ui/toaster'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { StructuredData, generateOrganizationSchema, generateWebsiteSchema } from '../components/seo/structured-data'
@@ -77,7 +78,10 @@ html {
 }
         `}</style>
       </head>
-      <body suppressHydrationWarning={true}>{children}</body>
+      <body suppressHydrationWarning={true}>
+        {children}
+        <Toaster />
+      </body>
     </html>
   )
 }

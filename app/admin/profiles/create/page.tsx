@@ -131,7 +131,9 @@ interface UploadedImage {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [activeTab, setActiveTab] = useState('photos');
   const [pasteText, setPasteText] = useState<string>("");
-  const tabOrder = ['photos', 'basic', 'religious', 'physical', 'lifestyle', 'education', 'family', 'partner', 'paste'] as const;
+  // Feature flag: show/hide the "Fill Demo Details" button in bottom bar
+  const SHOW_DEMO_BUTTON = false;
+  const tabOrder = ['photos', 'basic', 'religious', 'physical', 'lifestyle', 'education', 'family', 'partner'] as const;
   const goPrev = () => {
     const idx = tabOrder.indexOf(activeTab as typeof tabOrder[number]);
     if (idx > 0) setActiveTab(tabOrder[idx - 1]);
@@ -285,6 +287,7 @@ interface UploadedImage {
     if (!files) return;
     const MAX_IMAGES = 4;
     const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
     setImages(prev => {
       const remainingSlots = MAX_IMAGES - prev.length;
@@ -303,10 +306,19 @@ interface UploadedImage {
         .slice(0, remainingSlots)
         .forEach(file => {
           if (!file.type.startsWith('image/')) return;
+          if (!ALLOWED_TYPES.includes(file.type)) {
+            toast({
+              title: 'Invalid file type',
+              description: 'Only JPEG, JPG, PNG, and WebP are allowed.',
+              variant: 'destructive',
+            });
+            return;
+          }
           if (file.size > MAX_SIZE_BYTES) {
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
             toast({
               title: 'File too large',
-              description: 'Each photo must be under 4MB.',
+              description: `Selected file is ${sizeMB}MB. Maximum 4MB allowed per photo.`,
               variant: 'destructive',
             });
             return;
@@ -487,6 +499,108 @@ interface UploadedImage {
     })));
   };
 
+  // Fill demo details (images remain unchanged)
+  const fillDemoDetails = () => {
+    const dob = '1998-06-15';
+    setFormData(prev => ({
+      ...prev,
+      // Personal details
+      first_name: 'Ayesha',
+      middle_name: '',
+      last_name: 'Khan',
+      email: 'demo.user@example.com',
+      phone: '+92-300-1234567',
+      date_of_birth: dob,
+      age: calculateAge(dob),
+      gender: 'female',
+      city: 'Karachi',
+      country: 'Pakistan',
+      state: 'Sindh',
+      area: 'DHA Phase 6',
+      nationality: 'Pakistani',
+      ethnicity: 'South Asian',
+
+      // Religious
+      religion: 'Islam',
+      sect: 'Sunni',
+      caste: 'Syed',
+      mother_tongue: 'Urdu',
+      marital_status: 'never_married',
+
+      // Physical
+      height: "5'5",
+      weight: '55',
+      body_type: 'average',
+      complexion: 'fair',
+      wear_hijab: 'sometimes',
+
+      // Lifestyle
+      diet: 'balanced',
+      drink: 'no',
+      smoke: 'no',
+      living_situation: 'with_family',
+      religious_values: 'moderate',
+      read_quran: 'regularly',
+      hafiz_quran: 'no',
+      polygamy: 'reject',
+
+      // Education & Work
+      education: 'Bachelors',
+      field_of_study: 'Computer Science',
+      custom_field_of_study: '',
+      college: 'IBA Karachi',
+      working_with: 'Private Company',
+      annual_income: '1200000',
+      occupation: 'Software Engineer',
+
+      // Family details
+      father_occupation: 'Businessman',
+      mother_occupation: 'Homemaker',
+      brothers: 1,
+      brothers_married: 1,
+      sisters: 2,
+      sisters_married: 1,
+      family_values: 'traditional',
+      have_children: 'no',
+      want_children: 'yes',
+      house_ownership: 'own',
+      house_owner: 'family',
+
+      // Partner preferences
+      partner_age_from: 25,
+      partner_age_to: 35,
+      partner_height_from: "5'6",
+      partner_height_to: "6'2",
+      partner_education: 'Bachelors',
+      partner_occupation: 'Engineer',
+      partner_income: '1500000',
+      partner_location: 'Pakistan or Abroad',
+      partner_religion: 'Islam',
+      partner_sect: 'Sunni',
+      partner_caste: 'Any',
+      partner_marital_status: 'never_married',
+      partner_have_children: 'no',
+      partner_want_children: 'yes',
+      partner_religious_values: 'moderate',
+      partner_wear_hijab: 'no_preference',
+      partner_polygamy: 'reject',
+
+      // About
+      about: 'I am a positive, family-oriented person with modern values.',
+      looking_for: 'Looking for a sincere, educated, and respectful partner.',
+      hobbies: 'Reading, traveling, cooking, volunteering',
+      additional_info: 'Open to relocation. Prefer mutual understanding and respect.',
+
+      // Subscription & status
+      subscription_status: 'free',
+      profile_status: 'approved',
+      views_limit: 0,
+      verified_badge: false,
+      boost_profile: false,
+    }));
+    toast({ title: 'Demo details filled', description: 'You can adjust any field as needed.' });
+  };
+
   const handleSubmit = async () => {
     if (!adminSession) return;
 
@@ -550,23 +664,26 @@ interface UploadedImage {
               },
               body: imageFormData,
             });
-
+            // Surface server-side errors (e.g., >4MB or invalid type) to admin
+            const imageResult = await imageResponse.json().catch(async () => ({ error: await imageResponse.text() }));
             if (!imageResponse.ok) {
-              console.error('Failed to upload image:', await imageResponse.text());
+              console.error('Failed to upload image:', imageResult);
+              toast({
+                title: 'Image upload failed',
+                description: imageResult?.error || 'File too large (max 4MB) or invalid image type',
+                variant: 'destructive',
+              });
+              throw new Error(imageResult?.error || 'Image upload failed');
             }
           }
         }
       }
 
-      // Show success message with auth credentials
-      const authCredentials = result.data.auth_credentials;
+      // Show success message without exposing credentials
       toast({
         title: "Success",
-        description: `Profile created successfully! Auth Email: ${authCredentials.email} | Password: ${authCredentials.password}`,
+        description: "Profile created successfully.",
       });
-
-      // Also log credentials to console for admin reference
-      console.log('Generated Auth Credentials:', authCredentials);
 
       router.push('/admin/profiles');
 
@@ -613,7 +730,7 @@ interface UploadedImage {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-9">
+                <TabsList className="grid w-full grid-cols-8">
                   <TabsTrigger value="photos">Photos</TabsTrigger>
                   <TabsTrigger value="basic">Basic</TabsTrigger>
                   <TabsTrigger value="religious">Religious</TabsTrigger>
@@ -622,7 +739,6 @@ interface UploadedImage {
                   <TabsTrigger value="education">Education</TabsTrigger>
                   <TabsTrigger value="family">Family</TabsTrigger>
                   <TabsTrigger value="partner">Partner</TabsTrigger>
-                  <TabsTrigger value="paste">Paste</TabsTrigger>
                 </TabsList>
 
                 {/* Photos Tab */}
@@ -684,13 +800,13 @@ interface UploadedImage {
                             id="image-upload"
                             type="file"
                             multiple
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                             className="hidden"
                             onChange={handleImageUpload}
                           />
                         </label>
                         <p className="text-sm text-gray-600">
-                          Max 4 photos. Each photo must be under 4MB. The first photo will be set as main.
+                          Max 4 photos. Each photo must be under 4MB. Allowed types: JPEG, JPG, PNG, WebP. The first photo will be set as main.
                         </p>
                       </div>
                     </div>
@@ -1484,73 +1600,67 @@ interface UploadedImage {
                   </div>
                 </TabsContent>
 
-                {/* Paste Tab */}
-                <TabsContent value="paste" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paste_text">Paste the profile text here</Label>
-                    <Textarea
-                      id="paste_text"
-                      placeholder="Paste profile details here..."
-                      rows={12}
-                      value={pasteText}
-                      onChange={(e) => setPasteText(e.target.value)}
-                    />
-                    <div className="flex items-center gap-3">
-                      <Button type="button" variant="secondary" onClick={() => parsePastedText(pasteText)}>
-                        Map
-                      </Button>
-                      <span className="text-xs text-muted-foreground">Click Map to fill fields from the pasted text.</span>
-                    </div>
-                  </div>
-                </TabsContent>
+                {/* Paste Tab hidden as requested */}
               </Tabs>
 
               {/* Remove the old image upload section since it's now in Photos tab */}
 
               {/* Navigation / Submit */}
-              <div className="flex justify-end gap-4 mt-8">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push('/admin/profiles')}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={goPrev}
-                  disabled={isFirstTab}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                {isLastTab ? (
+              <div className="flex justify-between items-center mt-8">
+                <div className="flex gap-4">
+                  {SHOW_DEMO_BUTTON && (
+                    <Button
+                      variant="outline"
+                      onClick={fillDemoDetails}
+                    >
+                      Fill Demo Details
+                    </Button>
+                  )}
                   <Button
-                    onClick={handleSubmit}
-                    disabled={loading}
+                    variant="outline"
+                    onClick={() => router.push('/admin/profiles')}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <div className="flex gap-4">
+                  <Button
+                    variant="secondary"
+                    onClick={goPrev}
+                    disabled={isFirstTab}
                     className="flex items-center gap-2"
                   >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Create Profile
-                      </>
-                    )}
+                    <ArrowLeft className="h-4 w-4" />
+                    Previous
                   </Button>
-                ) : (
-                  <Button
-                    onClick={goNext}
-                    className="flex items-center gap-2"
-                  >
-                    Next
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
+                  {isLastTab ? (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className="flex items-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Create Profile
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={goNext}
+                      className="flex items-center gap-2"
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
