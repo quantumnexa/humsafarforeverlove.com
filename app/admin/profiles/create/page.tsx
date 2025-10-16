@@ -1610,17 +1610,17 @@ interface UploadedImage {
                 <div className="flex gap-4">
                   <Button
                     variant="outline"
+                    onClick={() => router.push('/admin/profiles')}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={fillDemoDetails}
                     className={DEMO_BUTTON_VISUALLY_HIDDEN ? 'opacity-0' : ''}
                     aria-hidden={DEMO_BUTTON_VISUALLY_HIDDEN}
                   >
                     Fill Demo Details
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => router.push('/admin/profiles')}
-                  >
-                    Cancel
                   </Button>
                 </div>
                 <div className="flex gap-4">
