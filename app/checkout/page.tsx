@@ -3,40 +3,52 @@ import React from "react";
 
 export default function Checkout() {
   const handlePayNow = async () => {
-    const tokenRes = await fetch("/api/payfast/token");
-    const tokenData = await tokenRes.json();
+    try {
+      // Step 1: get token from our backend API
+      const tokenRes = await fetch("/api/payfast/token");
+      const tokenData = await tokenRes.json();
 
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "https://ipguat.apps.net.pk/Ecommerce/api/Transaction/PostTransaction";
+      // Step 2: create a form dynamically
+      const form = document.createElement("form");
+      form.method = "POST";
 
-    const fields = {
-      MERCHANT_ID: 236158,
-      MERCHANT_NAME: "Humsafar Forever Love",
-      TOKEN: tokenData.ACCESS_TOKEN,
-      TXNAMT: tokenData.amount,
-      BASKET_ID: tokenData.basket_id,
-      ORDER_DATE: new Date().toISOString().slice(0, 10),
-      SUCCESS_URL: "https://humsafarforeverlove.com/payment/success",
-      FAILURE_URL: "https://humsafarforeverlove.com/payment/failure",
-      CUSTOMER_EMAIL_ADDRESS: "test@user.com",
-      CUSTOMER_MOBILE_NO: "03001234567",
-      TXNDESC: "Humsafar Premium Plan",
-      PROCCODE: "00",
-      VERSION: "1.0",
-      SIGNATURE: "randomstring123",
-    };
+      // ✅ now use env variables (NOT hardcoded)
+      form.action = process.env.NEXT_PUBLIC_PAYFAST_TRANSACTION_URL;
 
-    for (const key in fields) {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = fields[key as keyof typeof fields];
-      form.appendChild(input);
+      // Step 3: form fields
+      const fields = {
+        MERCHANT_ID: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_ID,
+        MERCHANT_NAME: process.env.NEXT_PUBLIC_MERCHANT_NAME,
+        TOKEN: tokenData.ACCESS_TOKEN,
+        TXNAMT: tokenData.amount,
+        BASKET_ID: tokenData.basket_id,
+        ORDER_DATE: new Date().toISOString().slice(0, 10),
+        SUCCESS_URL: process.env.NEXT_PUBLIC_RETURN_URL,
+        FAILURE_URL: process.env.NEXT_PUBLIC_CANCEL_URL,
+        CUSTOMER_EMAIL_ADDRESS: "test@user.com",
+        CUSTOMER_MOBILE_NO: "03001234567",
+        TXNDESC: "Humsafar Premium Plan",
+        PROCCODE: "00",
+        VERSION: "1.0",
+        SIGNATURE: "randomstring123",
+      };
+
+      // Step 4: add hidden inputs
+      for (const key in fields) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+      }
+
+      // Step 5: submit
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error("PayFast error:", err);
+      alert("Something went wrong, please try again.");
     }
-
-    document.body.appendChild(form);
-    form.submit();
   };
 
   return (
