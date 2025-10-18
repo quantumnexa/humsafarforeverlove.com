@@ -11,7 +11,7 @@ export default function Checkout() {
     form.action = "https://ipguat.apps.net.pk/Ecommerce/api/Transaction/PostTransaction";
 
     const fields = {
-      MERCHANT_ID: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_ID,
+      MERCHANT_ID: 236158,
       MERCHANT_NAME: "Humsafar Forever Love",
       TOKEN: tokenData.ACCESS_TOKEN,
       TXNAMT: tokenData.amount,
