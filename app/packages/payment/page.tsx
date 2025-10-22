@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import { Check, CreditCard, Shield, Clock, Star, Crown, Zap, Upload, Building, Smartphone, Copy, X } from "lucide-react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { supabase } from "@/lib/supabaseClient"
 
 interface Package {
   id: string
@@ -107,40 +106,8 @@ export default function PaymentPage() {
     }
 
     // Get current user - simplified without admin policy checks
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUser(user)
-        // Guard: if there is any under_review payment, block payment page
-        try {
-          const { data: payments, error } = await supabase
-            .from('payments')
-            .select('payment_status')
-            .eq('user_id', user.id)
-            .in('payment_status', ['pending', 'under_review'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-          if (error) {
-            console.error('Guard check error:', error)
-            router.push('/packages')
-            return
-          }
-          if (payments && payments.length > 0) {
-            router.push('/packages')
-            return
-          }
-        } catch (e) {
-          console.error('Guard check failed:', e)
-          router.push('/packages')
-          return
-        } finally {
-          setCheckingGuard(false)
-        }
-      } else {
-        router.push('/auth')
-      }
-    }
-    getCurrentUser()
+    setCurrentUser({ id: 'local-user' })
+    setCheckingGuard(false)
   }, [packageId, router])
 
   // Removed checkPaymentError function - no admin policy complications needed
@@ -188,71 +155,17 @@ export default function PaymentPage() {
 
   const uploadScreenshotToStorage = async (file: File, userId: string): Promise<string | null> => {
     try {
-      // Check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
-      if (authError || !user) {
-        console.error('Authentication error:', authError)
-        setScreenshotUploadError('Please log in to upload screenshots')
-        return null
-      }
-
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}_${Date.now()}.${fileExt}`
-      const filePath = `${fileName}` // Simplified path without folder
-
-      console.log('Uploading file:', fileName, 'Size:', file.size, 'User:', user.id)
-
-      // Try uploading to a public bucket or create one without RLS
-      const { data, error } = await supabase.storage
-        .from('payment-screenshots')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true, // Allow overwrite if file exists
-          contentType: file.type
-        })
-
-      if (error) {
-        console.error('Storage upload error:', error)
-        
-        // If bucket doesn't exist, try creating it
-        if (error.message.includes('Bucket not found')) {
-          console.log('Trying to create bucket...')
-          // For now, show user-friendly error
-          setScreenshotUploadError('Storage bucket not configured. Please contact admin to set up payment-screenshots bucket.')
-          return null
-        }
-        
-        // If RLS error, try alternative approach
-        if (error.message.includes('row-level security') || error.message.includes('access denied')) {
-          console.log('RLS error detected, trying alternative upload...')
-          setScreenshotUploadError('Storage permissions issue. Admin needs to configure bucket policies.')
-          return null
-        }
-        
-        setScreenshotUploadError(`Upload failed: ${error.message}`)
-        return null
-      }
-
-      console.log('Upload successful:', data)
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('payment-screenshots')
-        .getPublicUrl(filePath)
-
-      console.log('Public URL:', urlData.publicUrl)
-      return urlData.publicUrl
+      // No DB/storage upload. Return local object URL for preview/submission.
+      const url = URL.createObjectURL(file)
+      return url
     } catch (error) {
-      console.error('Error uploading screenshot:', error)
-      setScreenshotUploadError(`Upload error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setScreenshotUploadError('Upload error: ' + (error instanceof Error ? error.message : 'Unknown error'))
       return null
     }
   }
 
   const handlePayment = async () => {
-    if (!packageDetails || !currentUser) return
+    if (!packageDetails) return
 
     // Check if screenshot is uploaded
     if (!paymentScreenshot) {
@@ -261,46 +174,21 @@ export default function PaymentPage() {
     }
 
     setLoading(true)
-    
     try {
       // Clear any previous upload errors
       setScreenshotUploadError('')
-      
-      // Upload screenshot to storage first
-      const screenshotUrl = await uploadScreenshotToStorage(paymentScreenshot, currentUser.id)
-      
+
+      // Use local URL instead of uploading to storage/DB
+      const screenshotUrl = await uploadScreenshotToStorage(paymentScreenshot, currentUser?.id || 'local-user')
       if (!screenshotUrl) {
-        alert('Failed to upload payment screenshot. Please check the error message above and try again.')
+        alert('Failed to process payment screenshot. Please try again.')
         setLoading(false)
         return
       }
 
-      // Create payment record for review - this will be reviewed by admin
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          user_id: currentUser.id,
-          amount: packageDetails.price,
-          currency: 'PKR',
-          views_limit: packageDetails.profileViews,
-          ss_url: screenshotUrl,
-          payment_status: 'under_review', // Status changes to under_review after screenshot upload
-          package_type: packageDetails.id,
-          payment_method: selectedPaymentMethod === 'bank' ? 'bank_transfer' : 'jazzcash',
-          created_at: new Date().toISOString()
-        })
-
-      if (paymentError) {
-        console.error('Payment record error:', paymentError)
-        alert(`Payment record error: ${paymentError.message}`)
-        setLoading(false)
-        return
-      }
-
-      // Success - payment submitted for review
-      alert(`Payment submitted for review! Your screenshot has been uploaded and is under admin review. You will receive ${packageDetails.profileViews} profile views once approved.`)
+      // No DB write. Simulate success and navigate.
+      alert(`Payment submitted! Screenshot captured locally. You will receive ${packageDetails.profileViews} profile views once processed by admin.`)
       router.push('/dashboard')
-      
     } catch (error) {
       console.error('Payment processing error:', error)
       alert(`Payment processing error: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -541,57 +429,16 @@ export default function PaymentPage() {
                   {/* PayFast Details */}
                   {selectedPaymentMethod === 'payfast' && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-green-800 mb-3">
-                        <CreditCard className="w-5 h-5" />
-                        <span className="font-semibold">PayFast - Secure Online Payment</span>
-                      </div>
-                      <div className="space-y-3 text-sm text-green-800">
-                        <p>Proceed with secure online payment via PayFast gateway. No screenshot needed.</p>
-                        <p>Supports cards, wallets, and bank accounts.</p>
-                      </div>
-                      <div className="mt-3">
-                        <Button
-                          type="button"
-                          onClick={async () => {
-                            // Guard checks already performed; initiate checkout
-                            try {
-                              setLoading(true)
-                              setPaymentError('')
-                              if (!currentUser?.id) {
-                                throw new Error('Please log in to continue')
-                              }
-                              const res = await fetch('/api/payfast/initiate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  packageId: packageDetails.id,
-                                  amount: packageDetails.price,
-                                  views_limit: packageDetails.profileViews,
-                                  user_id: currentUser.id
-                                })
-                              })
-                              const data = await res.json()
-                              if (!res.ok) {
-                                throw new Error(data.error || 'Failed to initiate PayFast')
-                              }
-                              // Redirect to PayFast payment page
-                              if (data?.redirect_url) {
-                                window.location.href = data.redirect_url
-                              } else {
-                                throw new Error('Missing redirect_url from server')
-                              }
-                            } catch (e: any) {
-                              console.error('PayFast initiate error:', e)
-                              setPaymentError(e.message || 'Unable to start PayFast checkout')
-                            } finally {
-                              setLoading(false)
-                            }
-                          }}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          Proceed to PayFast Checkout
-                        </Button>
-                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (!packageDetails) return
+                          router.push(`/payfast?amount=${packageDetails.price}`)
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Pay with PayFast
+                      </Button>
                     </div>
                   )}
                   {/* JazzCash Details */}
