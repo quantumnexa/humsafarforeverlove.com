@@ -1,5 +1,6 @@
 import React from "react"
 import { headers } from "next/headers"
+import AutoSubmit from "../../components/auto-submit"
 
 function generateRandomString(length = 4) {
   const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -143,16 +144,7 @@ export default async function PaymentLiveePage({
       )}
 
       {/* Auto-submit the form on load */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function(){
-              var form = document.getElementById('PayFast_payment_form');
-              if(form){ form.submit(); }
-            })();
-          `,
-        }}
-      />
++     <AutoSubmit formId="PayFast_payment_form" />
     </div>
   )
 }
