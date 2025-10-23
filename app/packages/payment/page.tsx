@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Check, CreditCard, Shield, Clock, Star, Crown, Zap, Upload, Building, Smartphone, Copy, X } from "lucide-react"
+import { Check, CreditCard, Shield, Clock, Star, Crown, Zap, Upload, Building, Smartphone, Copy, X, Sparkles, Users } from "lucide-react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 
@@ -20,6 +20,7 @@ interface Package {
   features: string[]
   addOns: string[]
   icon: any
+  isUnlimited?: boolean
 }
 
 export default function PaymentPage() {
@@ -95,6 +96,67 @@ export default function PaymentPage() {
       ],
       addOns: ["Verified Badge", "Boost Profile", "Spotlight Profile"],
       icon: Zap
+    },
+    bronze: {
+      id: "bronze",
+      name: "Bronze",
+      price: 50000,
+      duration: "Lifetime",
+      profileViews: 50,
+      features: [
+        "50 profile views",
+        "Offline matchmaking support",
+        "Priority customer support",
+        "In-person introductions (where available)",
+      ],
+      addOns: ["Matchmaker Assistance"],
+      icon: Users
+    },
+    silver: {
+      id: "silver",
+      name: "Silver",
+      price: 200000,
+      duration: "Lifetime",
+      profileViews: 100,
+      features: [
+        "100 profile views",
+        "Offline matchmaking with dedicated coordinator",
+        "Priority listing",
+        "Shortlisted profiles by team",
+      ],
+      addOns: ["Matchmaker Assistance"],
+      icon: Shield
+    },
+    gold: {
+      id: "gold",
+      name: "Gold",
+      price: 500000,
+      duration: "Lifetime",
+      profileViews: 200,
+      features: [
+        "200 profile views",
+        "Premium offline matchmaking",
+        "Personalized meetings scheduling",
+        "Background check assistance",
+      ],
+      addOns: ["Matchmaker Assistance"],
+      icon: Crown
+    },
+    diamond: {
+      id: "diamond",
+      name: "Diamond",
+      price: 1000000,
+      duration: "Lifetime",
+      profileViews: 0,
+      isUnlimited: true,
+      features: [
+        "Unlimited views",
+        "Elite offline matchmaking",
+        "Dedicated matchmaker",
+        "Exclusive events access",
+      ],
+      addOns: ["Matchmaker Assistance"],
+      icon: Sparkles
     }
   }
 
@@ -187,7 +249,7 @@ export default function PaymentPage() {
       }
 
       // No DB write. Simulate success and navigate.
-      alert(`Payment submitted! Screenshot captured locally. You will receive ${packageDetails.profileViews} profile views once processed by admin.`)
+      alert(`Payment submitted! Screenshot captured locally. You will receive ${packageDetails.isUnlimited ? 'Unlimited' : packageDetails.profileViews} profile views once processed by admin.`)
       router.push('/dashboard')
     } catch (error) {
       console.error('Payment processing error:', error)
@@ -255,12 +317,25 @@ export default function PaymentPage() {
 
                 {/* Profile Views */}
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {packageDetails.profileViews} Profile Views
-                  </div>
-                  <div className="text-blue-600 text-sm">
-                    Per month (5 free + {packageDetails.profileViews - 5} package)
-                  </div>
+                  {packageDetails.isUnlimited ? (
+                    <>
+                      <div className="text-2xl font-bold text-blue-600">
+                        Unlimited Profile Views
+                      </div>
+                      <div className="text-blue-600 text-sm">
+                        Per month (unlimited package)
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {packageDetails.profileViews} Profile Views
+                      </div>
+                      <div className="text-blue-600 text-sm">
+                        Per month (5 free + {packageDetails.profileViews - 5} package)
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Features */}

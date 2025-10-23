@@ -11,7 +11,7 @@
 
     <?php
 
-    $merchant_id = '236158';
+    $merchant_id = '102';
     $secured_key = 'Q3wan82UVtL5Y2r28eF6KgMh4Rdn';
     $basket_id = '001' . generateRandomString(4); // Generate basket_id with 4 random characters (letters and numbers)
     $trans_amount = '5';
