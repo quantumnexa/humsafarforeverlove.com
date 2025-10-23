@@ -514,6 +514,14 @@ export default function PaymentPage() {
                       >
                         Pay with PayFast
                       </Button>
+                      <div className="mt-3 text-sm text-green-800">
+                        PayFast Pakistan ka secure online payment gateway hai. Aap gateway checkout par
+                        redirect honge jahan debit/credit card se asaani se payment kar sakte hain. Hum kabhi
+                        bhi aapke card details store nahi karte.
+                      </div>
+                      <div className="mt-1 text-xs text-green-700">
+                        Zyada maloomat: <a href="/payfast" className="underline text-green-700 hover:text-green-800">PayFast details</a>
+                      </div>
                     </div>
                   )}
                   {/* JazzCash Details */}

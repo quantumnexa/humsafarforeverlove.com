@@ -1,8 +1,16 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { Poppins } from 'next/font/google'
 import { StructuredData, generateOrganizationSchema, generateWebsiteSchema } from '../components/seo/structured-data'
 import './globals.css'
+
+const poppins = Poppins({
+  weight: ['300','400','500','600','700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-poppins',
+})
 
 export const metadata: Metadata = {
   title: 'Humsafar Forever Love - Premium Pakistani Matrimonial Service',
@@ -67,11 +75,18 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
         <link rel="manifest" href="/favicon/site.webmanifest" />
+        {/* Resource hints for external images */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://kzmfreck4dxcc4cifgls.supabase.co" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://znmrwfqycwlnrefksdaq.supabase.co" crossOrigin="anonymous" />
+        {/* Preload first hero image to improve LCP */}
+        <link rel="preload" as="image" href="/wedding-couple-hero-1.jpg" />
         <StructuredData data={generateOrganizationSchema()} />
         <StructuredData data={generateWebsiteSchema()} />
         <style>{`
 html {
-  font-family: ${GeistSans.style.fontFamily};
+  font-family: ${poppins.style.fontFamily};
+  --font-poppins: ${poppins.variable};
   --font-sans: ${GeistSans.variable};
   --font-mono: ${GeistMono.variable};
 }

@@ -73,7 +73,7 @@ export default function PayfastSuccessPage() {
             <p className="text-sm text-gray-600 mb-4">Thank you! Your PayFast payment has completed.</p>
           )}
 
-          <div className="text-sm text-gray-600 mb-2">
+          {/* <div className="text-sm text-gray-600 mb-2">
             {saving && <span>Saving transaction...</span>}
             {!saving && stored === true && (
               <span className="text-green-700">Saved to database.</span>
@@ -83,7 +83,7 @@ export default function PayfastSuccessPage() {
                 Could not save transaction{reason ? ` (${reason})` : ""}.
               </span>
             )}
-          </div>
+          </div> */}
 
           <div className="flex gap-3 mt-4">
             <button
