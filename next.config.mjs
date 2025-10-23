@@ -19,8 +19,7 @@ const nextConfig = {
     domains: [
       'znmrwfqycwlnrefksdaq.supabase.co',
       'supabase.co',
-      'supabase.com',
-      'images.unsplash.com'
+      'supabase.com'
     ],
     remotePatterns: [
       {
@@ -30,7 +29,7 @@ const nextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
-    minimumCacheTTL: 31536000, // Cache optimized images for 1 year
+    minimumCacheTTL: 60, // Cache images for 60 seconds
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
@@ -38,29 +37,10 @@ const nextConfig = {
   experimental: {
     optimizeCss: true, // Enable CSS optimization
     scrollRestoration: true, // Better scroll restoration
-    optimizePackageImports: ['lucide-react'], // Reduce bundle size for icons
   },
   
   // Compression
   compress: true,
-
-  // Static asset caching headers
-  async headers() {
-    return [
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/:all*(js|css|png|jpg|jpeg|gif|svg|webp|avif|woff|woff2|otf)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-    ]
-  },
   
   // Bundle analyzer (enable when needed)
   // bundleAnalyzer: {
