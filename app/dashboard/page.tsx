@@ -12,6 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 import { Upload, X, Eye, User, Heart, GraduationCap, Users, Settings, ImageIcon, Check, Trash2 } from "lucide-react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
@@ -45,6 +55,7 @@ export default function DashboardPage() {
   const [isPhotoOperation, setIsPhotoOperation] = useState(false)
   const [isRefreshingPhotos, setIsRefreshingPhotos] = useState(false)
   const [photoSuccessMessage, setPhotoSuccessMessage] = useState<string | null>(null)
+  const [consentOpen, setConsentOpen] = useState(false)
   
   // Add payment status state
   const [paymentStatus, setPaymentStatus] = useState<{
@@ -2004,7 +2015,7 @@ export default function DashboardPage() {
                         <div className="flex gap-3">
                           {isLastTab(activeTab as TabKey) && (
                             <Button
-                              onClick={handleSaveAll}
+                              onClick={() => setConsentOpen(true)}
                               className="w-full sm:w-auto bg-humsafar-600 hover:bg-humsafar-700 text-white px-4 sm:px-6"
                             >
                               Save Changes
@@ -2653,7 +2664,7 @@ export default function DashboardPage() {
                         <div className="flex gap-3">
                           {/* replaced partner tab next navigation with a save button using existing save logic */}
                           <Button
-                            onClick={handleSaveAll}
+                            onClick={() => setConsentOpen(true)}
                             className="w-full sm:w-auto bg-humsafar-600 hover:bg-humsafar-700 text-white px-4 sm:px-6"
                           >
                             Save
@@ -2744,6 +2755,29 @@ export default function DashboardPage() {
           </Card>
         </div>
       )}
+      {/* Consent Modal for saving profile */}
+      <AlertDialog open={consentOpen} onOpenChange={setConsentOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Consent Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              I hereby give my consent to share my information. I also consent to allow other users to directly contact me using the numbers I am providing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConsentOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConsentOpen(false)
+                void handleSaveAll()
+              }}
+              className="bg-humsafar-600 hover:bg-humsafar-700"
+            >
+              I Agree & Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Footer />
     </div>
   )
