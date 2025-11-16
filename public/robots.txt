@@ -1,0 +1,17 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /auth
+Disallow: /profile/create
+Disallow: /profile/edit
+Disallow: /packages/payment/
+Disallow: /verified-badge-payment
+Disallow: /_next/
+Disallow: /api/
+
+# Host
+Host: https://humsafarforeverlove.com
+
+# Sitemaps
+Sitemap: https://humsafarforeverlove.com/sitemap.xml
