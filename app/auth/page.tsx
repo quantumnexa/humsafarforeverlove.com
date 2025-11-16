@@ -49,7 +49,7 @@ export default function AuthPage() {
           if (expiresAt && expiresAt > now) {
             // Check if email is verified
             if (session.user.email_confirmed_at) {
-              router.push("/")
+              router.push("/profiles")
             } else {
               // Show email confirmation modal for unverified users
               setSignupEmail(session.user.email || "")
@@ -76,7 +76,7 @@ export default function AuthPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/dashboard`
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/profiles`
         }
       })
       
@@ -188,7 +188,7 @@ export default function AuthPage() {
           // Double-check that we still have a valid session before redirecting
           const { data: { session } } = await supabase.auth.getSession()
           if (session?.user) {
-            router.push("/dashboard")
+            router.push("/profiles")
           } else {
             console.log("⚠️ Session not found after login, staying on auth page")
             setIsRedirecting(false)
@@ -342,8 +342,7 @@ export default function AuthPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user?.email_confirmed_at) {
-        // Email is verified, redirect to homepage
-        router.push("/")
+        router.push("/profiles")
       } else {
         // Email not verified yet
         setError("Email not verified yet. Please check your inbox and click the verification link.")

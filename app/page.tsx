@@ -33,6 +33,7 @@ import CustomAlert from "@/components/ui/custom-alert"
 import { useCustomAlert } from "@/hooks/use-custom-alert"
 import ProtectedImage from "@/components/ui/protected-image"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 // Helper function to capitalize text
 const capitalizeText = (text: string | null | undefined): string => {
@@ -49,6 +50,7 @@ export default function HomePage() {
   const [loadingFeatured, setLoadingFeatured] = useState<boolean>(true)
   const [isClient, setIsClient] = useState(false)
   const [viewedProfileIds, setViewedProfileIds] = useState<Set<string>>(new Set())
+  const [showPackagesDialog, setShowPackagesDialog] = useState(false)
   
   // Custom alert hook
   const { isOpen, alertConfig, hideAlert, showError, showConfirm } = useCustomAlert()
@@ -113,10 +115,7 @@ export default function HomePage() {
     // Check if user can view more profiles
     const canView = await ProfileViewService.canUserViewMoreProfiles()
     if (!canView.success || !canView.canView) {
-      showError(
-        `You have reached your view limit. ${canView.message || 'Upgrade your subscription to view more profiles.'}`,
-        'View Limit Reached'
-      )
+      setShowPackagesDialog(true)
       return
     }
 
@@ -143,6 +142,7 @@ export default function HomePage() {
       subtitle: "Join thousands of successful matches on Pakistan's most trusted matrimonial platform",
       image: "/wedding-couple-hero-1.jpg",
       cta: "Start Your Journey",
+      href: "/packages",
     },
     {
       id: 2,
@@ -150,6 +150,7 @@ export default function HomePage() {
       subtitle: "Every profile is verified for authenticity and security",
       image: "/wedding-couple-hero-2.jpg",
       cta: "Browse Profiles",
+      href: "/profiles",
     },
     {
       id: 3,
@@ -157,6 +158,7 @@ export default function HomePage() {
       subtitle: "Over 50,000 happy couples found their soulmate through humsafar",
       image: "/wedding-couple-hero-3.jpg",
       cta: "Read Stories",
+      href: "/success-stories",
     },
   ]
 
@@ -401,7 +403,7 @@ export default function HomePage() {
         
         // Fallback: Try to get some profiles if no approved subscriptions
         // Trying fallback due to no approved subscriptions
-        const { data: fallbackProfiles, error: fallbackError } = await supabase
+        let fallbackQuery = supabase
           .from('user_profiles')
           .select(`
             user_id,
@@ -424,6 +426,10 @@ export default function HomePage() {
             created_at,
             updated_at
           `)
+        if (currentUserId) {
+          fallbackQuery = fallbackQuery.neq('user_id', currentUserId)
+        }
+        const { data: fallbackProfiles, error: fallbackError } = await fallbackQuery
           .order('created_at', { ascending: false })
           .limit(4)
         
@@ -486,7 +492,15 @@ export default function HomePage() {
       }
       
       const approvedUserIds = approvedSubscriptions.map(sub => sub.user_id)
+      const filteredApprovedUserIds = currentUserId
+        ? approvedUserIds.filter((id: string) => id !== currentUserId)
+        : approvedUserIds
       // Found approved user IDs
+      if (filteredApprovedUserIds.length === 0) {
+        setFeaturedProfiles([])
+        setLoadingFeatured(false)
+        return
+      }
       
       // Step 2: Fetch profiles for approved users from user_profiles table
       const { data: profilesData, error: profilesError } = await supabase
@@ -512,7 +526,7 @@ export default function HomePage() {
           created_at,
           updated_at
         `)
-        .in('user_id', approvedUserIds)
+        .in('user_id', filteredApprovedUserIds)
         .order('created_at', { ascending: false })
       
       if (profilesError) {
@@ -598,6 +612,37 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-humsafar-50 via-white to-humsafar-100" suppressHydrationWarning>
       <Header />
+      <AlertDialog open={showPackagesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No Active Package</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose a package to view full profiles..
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid md:grid-cols-3 gap-3 mt-2">
+            <div className="border rounded-lg p-3">
+              <div className="font-semibold">Basic</div>
+              <div className="text-xs text-gray-600">10 profile views • Lifetime</div>
+              <Button className="w-full mt-2 bg-humsafar-600 hover:bg-humsafar-700 text-white" onClick={() => { setShowPackagesDialog(false); window.location.href = '/packages/payment?package=basic' }}>Buy Basic</Button>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="font-semibold">Standard</div>
+              <div className="text-xs text-gray-600">20 profile views • Lifetime</div>
+              <Button className="w-full mt-2 bg-humsafar-600 hover:bg-humsafar-700 text-white" onClick={() => { setShowPackagesDialog(false); window.location.href = '/packages/payment?package=standard' }}>Buy Standard</Button>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="font-semibold">Premium</div>
+              <div className="text-xs text-gray-600">30 profile views • Lifetime</div>
+              <Button className="w-full mt-2 bg-humsafar-600 hover:bg-humsafar-700 text-white" onClick={() => { setShowPackagesDialog(false); window.location.href = '/packages/payment?package=premium' }}>Buy Premium</Button>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowPackagesDialog(false)}>Stay Here</Button>
+            <AlertDialogAction onClick={() => { setShowPackagesDialog(false); window.location.href = '/packages' }}>View All Packages</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Hero Section with Slider */}
       <main className="container mx-auto px-4 py-8">
         <section className="relative h-[600px] overflow-hidden rounded-3xl" suppressHydrationWarning>
@@ -622,9 +667,11 @@ export default function HomePage() {
                   <div className="text-center text-white max-w-4xl px-4">
                     <h1 className="text-4xl md:text-6xl font-bold mb-6">{slide.title}</h1>
                     <p className="text-xl md:text-2xl mb-8 opacity-90">{slide.subtitle}</p>
-                    <Button size="lg" className="bg-humsafar-600 hover:bg-humsafar-700 text-lg px-8 py-3">
-                      {slide.cta}
-                    </Button>
+                    <Link href={slide.href} legacyBehavior>
+                      <Button size="lg" className="bg-humsafar-600 hover:bg-humsafar-700 text-lg px-8 py-3">
+                        {slide.cta}
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
