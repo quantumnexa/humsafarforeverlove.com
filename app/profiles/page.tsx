@@ -891,7 +891,7 @@ export default function ProfilesListingPage() {
               Choose a package to view full profiles..
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="grid md:grid-cols-3 gap-3 mt-2">
+          <div className="grid md:grid-cols-4 gap-3 mt-2">
             <div className="border rounded-lg p-3">
               <div className="font-semibold">Basic</div>
               <div className="text-xs text-gray-600">10 profile views • Lifetime</div>
@@ -906,6 +906,11 @@ export default function ProfilesListingPage() {
               <div className="font-semibold">Premium</div>
               <div className="text-xs text-gray-600">30 profile views • Lifetime</div>
               <Button className="w-full mt-2 bg-humsafar-600 hover:bg-humsafar-700 text-white" onClick={() => router.push('/packages/payment?package=premium')}>Buy Premium</Button>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="font-semibold">Weekly</div>
+              <div className="text-xs text-gray-600">3 profile views • 1 Week</div>
+              <Button className="w-full mt-2 bg-humsafar-600 hover:bg-humsafar-700 text-white" onClick={() => router.push('/packages/payment?package=weekly1')}>Buy Weekly</Button>
             </div>
           </div>
           <AlertDialogFooter>
